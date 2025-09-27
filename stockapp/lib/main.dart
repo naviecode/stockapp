@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:stockapp/core/theme_provider.dart';
 import 'package:stockapp/providers/portfolio_provider.dart';
 import 'package:stockapp/providers/transaction_provider.dart';
 
@@ -29,16 +30,21 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StockProvider()..listenStocks()), 
         ChangeNotifierProvider(create: (_) => PortfolioProvider()),
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'Stock App',
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        home: const Wrapper(),
-        routes: {
-          '/login': (_) => const LoginScreen(),
-          '/register': (_) => const RegisterScreen(),
-          '/main': (_) => const MainNavigation(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'Stock App',
+            theme: themeProvider.themeData, // ✅ lấy theme từ provider
+            debugShowCheckedModeBanner: false,
+            home: const Wrapper(),
+            routes: {
+              '/login': (_) => const LoginScreen(),
+              '/register': (_) => const RegisterScreen(),
+              '/main': (_) => const MainNavigation(),
+            },
+          );
         },
       ),
     );

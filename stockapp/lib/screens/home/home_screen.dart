@@ -2,182 +2,157 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stockapp/providers/auth_provider.dart';
 import 'package:stockapp/providers/portfolio_provider.dart';
-import '../../widgets/stock_card.dart';
-import '../stock/StockDetailPage.dart';
 import 'package:stockapp/providers/stock_provider.dart';
 import 'package:intl/intl.dart';
+import '../stock/StockDetailPage.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+class _HomeScreenState extends State<HomeScreen> {
+  String _searchText = "";
+
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context); // 👈 lấy theme hiện tại
     final stockProvider = Provider.of<StockProvider>(context, listen: false);
     final portfolioProvider = Provider.of<PortfolioProvider>(context);
     final auth = Provider.of<AuthProvider>(context);
     final vndFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'VND');
 
-    // Số dư ví
     final balance = auth.user?.balance ?? 0;
-
-    // Tổng giá trị portfolio realtime
     final totalPortfolio =
         portfolioProvider.calculateTotalValueRealtime(stockProvider.stocks);
-
-    // Tổng tài sản = balance + giá trị cổ phiếu realtime
     final totalAssets = balance + totalPortfolio;
 
     stockProvider.listenStocks();
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: const Text("Home"),
-        backgroundColor: Colors.green[300],
+        backgroundColor: theme.appBarTheme.backgroundColor ??
+            theme.colorScheme.surface,
+        elevation: 0,
+        title: Text(
+          "📊 Stock Ranking",
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  String keyword = '';
-                  return AlertDialog(
-                    title: const Text("Tìm cổ phiếu"),
-                    content: TextField(
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        hintText: "Nhập tên hoặc ký hiệu cổ phiếu",
-                      ),
-                      onChanged: (value) {
-                        keyword = value;
-                      },
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Hủy"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // Gọi logic filter
-                          Provider.of<StockProvider>(context, listen: false)
-                              .searchStock(keyword);
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Tìm"),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            icon: const Icon(Icons.search),
+            icon: Icon(Icons.search, color: theme.colorScheme.onSurface),
+            onPressed: () => _showSearchDialog(context),
           ),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.notifications)),
+          IconButton(
+            icon: Icon(Icons.notifications, color: theme.colorScheme.onSurface),
+            onPressed: () {},
+          ),
         ],
       ),
       body: Column(
         children: [
-          // 🔹 Header (Balance + Portfolio value)
+          // Balance + Assets
           Container(
             margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.green[100],
-              borderRadius: BorderRadius.circular(16),
+              color: theme.colorScheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Số dư ví 💰",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text(
-                      auth.user != null
-                          ? vndFormat.format(auth.user!.balance)
-                          : "Đang tải",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Tài sản 📊",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text(vndFormat.format(totalAssets),
-                        style: const TextStyle(fontSize: 16)),
-                  ],
-                ),
+                _infoBox(theme, "Số dư ví 💰",
+                    auth.user != null ? vndFormat.format(balance) : "Đang tải"),
+                _infoBox(theme, "Tài sản 📈", vndFormat.format(totalAssets)),
               ],
             ),
           ),
 
-          // 🔹 Quick Actions
+          // Filter + AI Suggest
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                // Dropdown filter thay cho nút Top Movers
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  tooltip: "Làm mới bộ lọc",
+                  onPressed: () {
+                    setState(() {
+                      _searchText = "";
+                    });
+                    stockProvider.setFilter(StockListFilter.all);
+                    stockProvider.searchStock(""); // reset kết quả search
+                  },
+                ),
+                const SizedBox(width: 8),
+
                 Expanded(
+                  flex: 2,
                   child: Consumer<StockProvider>(
-                    builder: (context, stockProvider, _) {
+                    builder: (context, sp, _) {
                       return DropdownButtonFormField<StockListFilter>(
-                        value: stockProvider.currentFilter,
+                        value: sp.currentFilter,
+                        dropdownColor: theme.colorScheme.surfaceVariant,
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: Colors.green[300],
+                          fillColor: theme.colorScheme.surfaceVariant,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                         ),
-                        dropdownColor: Colors.green[100],
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        icon: Icon(Icons.arrow_drop_down,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                        style: TextStyle(color: theme.colorScheme.onSurface),
                         items: const [
                           DropdownMenuItem(
-                            value: StockListFilter.all,
-                            child: Text("All"),
-                          ),
+                              value: StockListFilter.all, child: Text("All")),
                           DropdownMenuItem(
-                            value: StockListFilter.topGainers,
-                            child: Text("Top Gainers"),
-                          ),
+                              value: StockListFilter.topGainers,
+                              child: Text("Top Gainers")),
                           DropdownMenuItem(
-                            value: StockListFilter.topLosers,
-                            child: Text("Top Losers"),
-                          ),
+                              value: StockListFilter.topLosers,
+                              child: Text("Top Losers")),
                           DropdownMenuItem(
-                            value: StockListFilter.topVolume,
-                            child: Text("Top Volume"),
-                          ),
+                              value: StockListFilter.topVolume,
+                              child: Text("Top Volume")),
                         ],
                         onChanged: (filter) {
-                          if (filter != null) {
-                            stockProvider.setFilter(filter);
-                          }
+                          if (filter != null) sp.setFilter(filter);
                         },
                       );
                     },
                   ),
                 ),
-
                 const SizedBox(width: 10),
-
-                // Giữ nguyên nút AI Gợi ý
                 Expanded(
+                  flex: 1,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "AI Gợi ý: tính năng đang phát triển",
+                            style: TextStyle(color: theme.colorScheme.onPrimary),
+                          ),
+                          backgroundColor: theme.colorScheme.primary,
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.auto_awesome),
                     label: const Text("AI Gợi ý"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[300],
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
@@ -185,114 +160,177 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // Consumer<StockProvider>(
-          //   builder: (context, stockProvider, _) {
-          //     final topGainers = stockProvider.getTopGainers();
-          //     final topLosers = stockProvider.getTopLosers();
+          // Table Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text("Currency",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          fontWeight: FontWeight.bold)),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text("Market Cap /24h",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          fontWeight: FontWeight.bold)),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text("Price /24h",
+                      textAlign: TextAlign.end,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
 
-          //     return Column(
-          //       crossAxisAlignment: CrossAxisAlignment.start,
-          //       children: [
-          //         const Padding(
-          //           padding: EdgeInsets.symmetric(horizontal: 12),
-          //           child: Text("Top Gainers",
-          //               style: TextStyle(fontWeight: FontWeight.bold)),
-          //         ),
-          //         SizedBox(
-          //           height: 140,
-          //           child: ListView.builder(
-          //             scrollDirection: Axis.horizontal,
-          //             itemCount: topGainers.length,
-          //             padding: const EdgeInsets.symmetric(horizontal: 12),
-          //             itemBuilder: (context, index) {
-          //               final stock = topGainers[index];
-          //               return StockCard(
-          //                 width: 120, // ✅ chiều ngang cố định
-          //                 symbol: stock.symbol,
-          //                 price: stock.price,
-          //                 change: stock.changePercent,
-          //                 volume: stock.volume,
-          //                 onTap: () {
-          //                   Navigator.push(
-          //                     context,
-          //                     MaterialPageRoute(
-          //                       builder: (_) => StockDetailPage(stockId: stock.id),
-          //                     ),
-          //                   );
-          //                 },
-          //               );
-          //             },
-          //           ),
-          //         ),
-          //         const SizedBox(height: 10),
-          //         const Padding(
-          //           padding: EdgeInsets.symmetric(horizontal: 12),
-          //           child: Text("Top Losers",
-          //               style: TextStyle(fontWeight: FontWeight.bold)),
-          //         ),
-          //          SizedBox(
-          //           height: 140,
-          //           child: ListView.builder(
-          //             scrollDirection: Axis.horizontal,
-          //             itemCount: topLosers.length,
-          //             padding: const EdgeInsets.symmetric(horizontal: 12),
-          //             itemBuilder: (context, index) {
-          //               final stock = topLosers[index];
-          //               return StockCard(
-          //                 width: 120, // ✅ chiều ngang cố định
-          //                 symbol: stock.symbol,
-          //                 price: stock.price,
-          //                 change: stock.changePercent,
-          //                 volume: stock.volume,
-          //                 onTap: () {
-          //                   Navigator.push(
-          //                     context,
-          //                     MaterialPageRoute(
-          //                       builder: (_) => StockDetailPage(stockId: stock.id),
-          //                     ),
-          //                   );
-          //                 },
-          //               );
-          //             },
-          //           ),
-          //         ),
-          //       ],
-          //     );
-          //   },
-          // ),
+          Divider(color: theme.dividerColor, height: 1),
 
-          // const SizedBox(height: 10),
-
-          // 🔹 Stock List realtime
+          // Stock List
           Expanded(
             child: Consumer<StockProvider>(
-              builder: (context, stockProvider, _) {
-                final stocks = stockProvider.filteredStockList;
-
+              builder: (context, sp, _) {
+                final stocks = sp.filteredStockList;
                 if (stocks.isEmpty) {
-                  return const Center(child: Text("Chưa có dữ liệu cổ phiếu"));
+                  return Center(
+                    child: Text("Chưa có dữ liệu cổ phiếu",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color:
+                                theme.colorScheme.onSurface.withOpacity(0.5))),
+                  );
                 }
 
-                return ListView.builder(
+                return ListView.separated(
                   itemCount: stocks.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(color: theme.dividerColor, height: 1),
                   itemBuilder: (context, index) {
                     final stock = stocks[index];
-                    return StockCard(
-                      symbol: stock.symbol,
-                      price: stock.price,
-                      change: stock.changePercent,
-                      volume: stock.volume,
+                    final isNegative = stock.changePercent < 0;
+                    final changeColor = isNegative
+                        ? Colors.redAccent
+                        : Colors.greenAccent;
+
+                    return InkWell(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                StockDetailPage(stockId: stock.id),
+                            builder: (_) => StockDetailPage(stockId: stock.id),
                           ),
                         );
                       },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            // 🔹 Currency (STT + Image + Name)
+                            Expanded(
+                              flex: 3,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "#${index + 1}",
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.5),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor:
+                                        theme.colorScheme.surfaceVariant,
+                                    child: (stock.logoUrl != null &&
+                                            stock.logoUrl!.isNotEmpty)
+                                        ? ClipOval(
+                                            child: Image.network(
+                                              stock.logoUrl!,
+                                              fit: BoxFit.cover,
+                                              width: 28,
+                                              height: 28,
+                                              errorBuilder: (context, error,
+                                                      stackTrace) =>
+                                                  Icon(Icons.business,
+                                                      color: theme.colorScheme
+                                                          .onSurface
+                                                          .withOpacity(0.7),
+                                                      size: 16),
+                                            ),
+                                          )
+                                        : Icon(Icons.business,
+                                            color: theme.colorScheme.onSurface
+                                                .withOpacity(0.7),
+                                            size: 16),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      "${stock.symbol} - ${stock.name}",
+                                      overflow: TextOverflow.ellipsis,
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Market Cap (volume)
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                NumberFormat.compact().format(stock.volume),
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.7),
+                                ),
+                              ),
+                            ),
+
+                            // Price + Change %
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    vndFormat.format(stock.price),
+                                    style:
+                                        theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurface,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${stock.changePercent.toStringAsFixed(2)}%",
+                                    style: TextStyle(
+                                      color: changeColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   },
                 );
@@ -301,6 +339,65 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _infoBox(ThemeData theme, String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            )),
+        const SizedBox(height: 6),
+        Text(value,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+            )),
+      ],
+    );
+  }
+
+  void _showSearchDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    String keyword = '';
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surfaceVariant,
+          title: Text("Tìm cổ phiếu",
+              style: TextStyle(color: theme.colorScheme.onSurface)),
+          content: TextField(
+            autofocus: true,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+            decoration: InputDecoration(
+              hintText: "Nhập tên hoặc ký hiệu cổ phiếu",
+              hintStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.5)),
+            ),
+            onChanged: (value) => keyword = value,
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Hủy",
+                    style: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7)))),
+            TextButton(
+              onPressed: () {
+                Provider.of<StockProvider>(context, listen: false)
+                    .searchStock(keyword);
+                Navigator.pop(context);
+              },
+              child: Text("Tìm",
+                  style: TextStyle(color: theme.colorScheme.primary)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

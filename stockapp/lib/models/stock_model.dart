@@ -7,6 +7,7 @@ class StockModel {
   final double price; // Giá mới nhất
   final double changePercent; // % biến động ngày
   final int volume; // Tổng khối lượng
+  final String logoUrl;
   final List<PricePoint> history; // Lịch sử giá
   final Timestamp updatedAt;
 
@@ -17,6 +18,7 @@ class StockModel {
     required this.price,
     required this.changePercent,
     required this.volume,
+    required this.logoUrl,
     required this.history,
     required this.updatedAt,
   });
@@ -35,6 +37,7 @@ class StockModel {
               .map((e) => PricePoint.fromMap(Map<String, dynamic>.from(e)))
               .toList()
           : [],
+      logoUrl: data['logoUrl'] ?? '',
       updatedAt: data['updatedAt'] ?? Timestamp.now(),
     );
   }
@@ -52,6 +55,7 @@ class StockModel {
                   PricePoint.fromMap(Map<String, dynamic>.from(e)))
               .toList() ??
           [],
+      logoUrl: data['logoUrl'] ?? '',
       updatedAt: data['updatedAt'] ?? Timestamp.now(),
     );
   }

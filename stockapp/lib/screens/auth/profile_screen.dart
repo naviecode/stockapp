@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:stockapp/core/theme_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/portfolio_provider.dart';
 import '../../providers/transaction_provider.dart';
@@ -19,11 +20,13 @@ class ProfileScreen extends StatelessWidget {
     final transactionProvider = Provider.of<TransactionProvider>(context);
 
     final f = NumberFormat('#,###');
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        backgroundColor: Colors.green[300],
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.green[300],
       ),
       body: Builder(
         builder: (context) {
@@ -44,7 +47,8 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-               GestureDetector(
+                // Avatar
+                GestureDetector(
                   onTap: () async {
                     final picker = ImagePicker();
                     final XFile? pickedFile = await picker.pickImage(
@@ -65,7 +69,7 @@ class ProfileScreen extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 40,
                     backgroundImage: user.photoUrl != null && user.photoUrl!.isNotEmpty
-                        ? FileImage(File(user.photoUrl!)) // load từ local file
+                        ? FileImage(File(user.photoUrl!))
                         : null,
                     child: user.photoUrl == null || user.photoUrl!.isEmpty
                         ? const Icon(Icons.person, size: 40)
@@ -74,11 +78,16 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                 // userName + nút update
+                // Username + nút edit
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(user.name ?? '-', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(
+                      user.name ?? '-',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
@@ -117,20 +126,23 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
 
-                Text(user.email ?? '', style: const TextStyle(color: Colors.grey)),
+                Text(user.email ?? '', style: theme.textTheme.bodySmall),
                 const SizedBox(height: 12),
                 Text(
                   'Ngày tạo: ${user.createdAt != null ? DateFormat('dd/MM/yyyy').format(user.createdAt!) : '-'}',
-                  style: const TextStyle(color: Colors.grey),
+                  style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 20),
 
+                // Thông tin tài khoản
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.account_balance_wallet, color: Colors.green),
                     title: const Text('Số dư ví ảo'),
-                    subtitle: Text("${f.format(user.balance)} VND",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      "${f.format(user.balance)} VND",
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -139,10 +151,8 @@ class ProfileScreen extends StatelessWidget {
                     leading: const Icon(Icons.pie_chart, color: Colors.blue),
                     title: const Text('Tổng giá trị danh mục'),
                     subtitle: Text(
-                      portfolio != null
-                          ? "${f.format(portfolio.totalValue)} VND"
-                          : "-",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      portfolio != null ? "${f.format(portfolio.totalValue)} VND" : "-",
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -153,7 +163,7 @@ class ProfileScreen extends StatelessWidget {
                     title: const Text('Số lượng giao dịch đã thực hiện'),
                     subtitle: Text(
                       transactions != null ? "${transactions.length}" : "0",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -164,7 +174,24 @@ class ProfileScreen extends StatelessWidget {
                     title: const Text('Số loại cổ phiếu đang nắm giữ'),
                     subtitle: Text(
                       portfolio != null ? "${portfolio.stocks.length}" : "0",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.dark_mode, color: Colors.amber),
+                    title: const Text('Chế độ tối'),
+                    trailing: Consumer<ThemeProvider>(
+                      builder: (context, themeProvider, _) {
+                        return Switch(
+                          value: themeProvider.isDarkMode,
+                          onChanged: (value) {
+                            themeProvider.setTheme(value);
+                          },
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -175,8 +202,8 @@ class ProfileScreen extends StatelessWidget {
                   label: const Text("Đăng xuất"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
-                    foregroundColor: Colors.white, 
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0)
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   ),
                   onPressed: () async {
                     await auth.signOut();

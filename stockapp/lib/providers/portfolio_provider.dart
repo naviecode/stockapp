@@ -189,6 +189,7 @@ class PortfolioProvider with ChangeNotifier {
             changePercent: 0,
             volume: 0,
             updatedAt: Timestamp.now(),
+            logoUrl: '',
             history: []),
       );
       total += p.quantity * stock.price;
