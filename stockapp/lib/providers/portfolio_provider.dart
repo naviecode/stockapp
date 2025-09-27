@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:stockapp/models/stock_model.dart';
 import '../models/portfolio_model.dart';
 
 class PortfolioProvider with ChangeNotifier {
@@ -94,5 +95,28 @@ class PortfolioProvider with ChangeNotifier {
     };
 
     await docRef.set(newData, SetOptions(merge: true));
+  }
+
+  double calculateTotalValueRealtime(List<StockModel> stockList) {
+    if (_portfolio == null || _portfolio!.stocks.isEmpty) return 0;
+
+    double total = 0;
+    for (var p in _portfolio!.stocks) {
+      // tìm stock realtime theo stockId
+      final stock = stockList.firstWhere(
+        (s) => s.id == p.stockId,
+        orElse: () => StockModel(
+            id: p.stockId,
+            symbol: '',
+            name: '',
+            price: 0,
+            changePercent: 0,
+            volume: 0,
+            updatedAt: Timestamp.now(),
+            history: []),
+      );
+      total += p.quantity * stock.price; 
+    }
+    return total;
   }
 }
