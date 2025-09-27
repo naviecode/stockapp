@@ -14,19 +14,23 @@ class PortfolioProvider with ChangeNotifier {
   PortfolioModel? get portfolio => _portfolio;
 
   /// Lắng nghe portfolio của user
-  void listenPortfolio(String userId) {
-    _loading = true; // bắt đầu loading
-    notifyListeners();
+  void listenPortfolio(String? userId) {
+      _loading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
 
-    _db.collection('portfolios').doc(userId).snapshots().listen((doc) {
-      if (doc.exists) {
-        _portfolio = PortfolioModel.fromFirestore(doc.data()!, doc.id);
-      } else {
-        _portfolio = null;
-      }
-      _loading = false; // kết thúc loading
-      notifyListeners();
-    });
+      _db.collection('portfolios').doc(userId).snapshots().listen((doc) {
+        if (doc.exists) {
+          _portfolio = PortfolioModel.fromFirestore(doc.data()!, doc.id);
+        } else {
+          _portfolio = null;
+        }
+        _loading = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      });
   }
 
   /// Cập nhật portfolio khi có giao dịch Mua/Bán
@@ -39,8 +43,8 @@ class PortfolioProvider with ChangeNotifier {
 }) async {
   final userRef = _db.collection('users').doc(userId);
   final portfolioRef = _db.collection('portfolios').doc(userId);
+  final txRef = _db.collection('transactions');
 
-  // Lấy balance từ user
   final userSnap = await userRef.get();
   if (!userSnap.exists) {
     throw Exception("User không tồn tại");
@@ -128,6 +132,17 @@ class PortfolioProvider with ChangeNotifier {
     'updatedAt': FieldValue.serverTimestamp(),
   };
   await portfolioRef.set(portfolioData, SetOptions(merge: true));
+
+   await txRef.add({
+    'userId': userId,
+    'stockId': stockId,
+    'type': type,
+    'quantity': quantity,
+    'price': price,
+    'total': quantity * price,
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+
 
   notifyListeners();
 }

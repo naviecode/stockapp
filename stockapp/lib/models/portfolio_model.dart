@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PortfolioStock {
   final String stockId;
   final int quantity;
@@ -46,7 +48,7 @@ class PortfolioModel {
           .map((e) => PortfolioStock.fromMap(e))
           .toList(),
       totalValue: (data['totalValue'] ?? 0).toDouble(),
-      updatedAt: (data['updatedAt'] as DateTime),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
