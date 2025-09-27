@@ -34,7 +34,7 @@ class PortfolioProvider with ChangeNotifier {
   }
 
    /// Fetch thẳng từ Firestore 1 lần (dùng khi mở popup lần đầu)
-  Future<PortfolioModel?> fetchPortfolioOnce(String userId) async {
+  Future<PortfolioModel?> fetchPortfolioOnce(String? userId) async {
     _loading = true;
     notifyListeners();
 
