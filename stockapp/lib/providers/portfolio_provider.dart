@@ -140,7 +140,7 @@ class PortfolioProvider with ChangeNotifier {
     'quantity': quantity,
     'price': price,
     'total': quantity * price,
-    'timestamp': FieldValue.serverTimestamp(),
+    'createdAt': FieldValue.serverTimestamp(),
   });
 
 

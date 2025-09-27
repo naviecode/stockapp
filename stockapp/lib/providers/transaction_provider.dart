@@ -16,7 +16,7 @@ class TransactionProvider with ChangeNotifier {
 
 
   /// Lắng nghe toàn bộ giao dịch của user
-  void listenTransactions(String userId) {
+  void listenTransactions(String? userId) {
     _loading = true;
     notifyListeners();
 
