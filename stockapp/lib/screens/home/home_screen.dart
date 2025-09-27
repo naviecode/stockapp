@@ -18,16 +18,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // 👈 lấy theme hiện tại
+    final theme = Theme.of(context); 
     final stockProvider = Provider.of<StockProvider>(context, listen: false);
-    final portfolioProvider = Provider.of<PortfolioProvider>(context);
-    final auth = Provider.of<AuthProvider>(context);
+    // final portfolioProvider = Provider.of<PortfolioProvider>(context);
+    // final auth = Provider.of<AuthProvider>(context);
     final vndFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'VND');
 
-    final balance = auth.user?.balance ?? 0;
-    final totalPortfolio =
-        portfolioProvider.calculateTotalValueRealtime(stockProvider.stocks);
-    final totalAssets = balance + totalPortfolio;
+    // final balance = auth.user?.balance ?? 0;
+    // final totalPortfolio =
+    //     portfolioProvider.calculateTotalValueRealtime(stockProvider.stocks);
+    // final totalAssets = balance + totalPortfolio;
 
     stockProvider.listenStocks();
 
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
             theme.colorScheme.surface,
         elevation: 0,
         title: Text(
-          "📊 Stock Ranking",
+          "📊 Home",
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -57,30 +57,38 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           // Balance + Assets
-          Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _infoBox(theme, "Số dư ví 💰",
-                    auth.user != null ? vndFormat.format(balance) : "Đang tải"),
-                _infoBox(theme, "Tài sản 📈", vndFormat.format(totalAssets)),
-              ],
-            ),
-          ),
+          Consumer2<AuthProvider, PortfolioProvider>(
+            builder: (context, auth, portfolio, _) {
+                final stockProvider = Provider.of<StockProvider>(context);
+                final balance = auth.user?.balance ?? 0;
+                final totalPortfolio = portfolio.calculateTotalValueRealtime(stockProvider.stocks);
+                final totalAssets = balance + totalPortfolio;
 
+                return Container(
+                  margin: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _infoBox(theme, "Số dư ví 💰",
+                          auth.user != null ? vndFormat.format(balance) : "Đang tải"),
+                      _infoBox(theme, "Tài sản 📈", vndFormat.format(totalAssets)),
+                    ],
+                  ),
+                );
+              },
+            ),
           // Filter + AI Suggest
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  icon: Icon(Icons.refresh, color: theme.colorScheme.onSurface),
                   tooltip: "Làm mới bộ lọc",
                   onPressed: () {
                     setState(() {

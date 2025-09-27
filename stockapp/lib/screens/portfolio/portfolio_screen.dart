@@ -26,7 +26,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PortfolioProvider>();
-    final vndFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+    final vndFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'VND');
     final theme = Theme.of(context);
 
     if (provider.loading) {
@@ -162,7 +162,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                             style: theme.textTheme.bodySmall,
                           ),
                           trailing: Text(
-                            "Avg: ${vndFormat.format(stockPrice)}",
+                            "Giá trung bình mua: ${vndFormat.format(stockPrice)}",
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,

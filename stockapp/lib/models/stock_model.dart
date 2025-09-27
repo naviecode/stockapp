@@ -41,7 +41,30 @@ class StockModel {
       updatedAt: data['updatedAt'] ?? Timestamp.now(),
     );
   }
-
+  
+  StockModel copyWith({
+    String? id,
+    String? symbol,
+    String? name,
+    double? price,
+    double? changePercent,
+    int? volume,
+    String? logoUrl,
+    List<PricePoint>? history,
+    Timestamp? updatedAt,
+  }) {
+    return StockModel(
+      id: id ?? this.id,
+      symbol: symbol ?? this.symbol,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      changePercent: changePercent ?? this.changePercent,
+      volume: volume ?? this.volume,
+      logoUrl: logoUrl ?? this.logoUrl,
+      history: history ?? this.history,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
   factory StockModel.fromMap(Map<String, dynamic> data, {String id = ''}) {
     return StockModel(
       id: id,

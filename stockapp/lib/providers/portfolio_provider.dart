@@ -61,20 +61,20 @@ class PortfolioProvider with ChangeNotifier {
 
   /// Cập nhật portfolio khi có giao dịch Mua/Bán
   Future<void> tradeStock({
-  required String? userId,
-  required String stockId,
-  required String type, // BUY | SELL
-  required int quantity,
-  required double price,
-}) async {
-  final userRef = _db.collection('users').doc(userId);
-  final portfolioRef = _db.collection('portfolios').doc(userId);
-  final txRef = _db.collection('transactions');
+    required String? userId,
+    required String stockId,
+    required String type, // BUY | SELL
+    required int quantity,
+    required double price,
+  }) async {
+    final userRef = _db.collection('users').doc(userId);
+    final portfolioRef = _db.collection('portfolios').doc(userId);
+    final txRef = _db.collection('transactions');
 
-  final userSnap = await userRef.get();
-  if (!userSnap.exists) {
-    throw Exception("User không tồn tại");
-  }
+    final userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw Exception("User không tồn tại");
+    }
 
   double balance = (userSnap.data()?['balance'] ?? 0).toDouble();
 

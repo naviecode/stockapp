@@ -74,7 +74,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       backgroundColor: theme.colorScheme.background, // 👈 đổi theo theme
       appBar: AppBar(
         title: Text(
-          "Lịch sử giao dịch",
+          "History transaction",
           style: theme.textTheme.titleLarge?.copyWith(
             color: theme.colorScheme.onBackground,
           ),

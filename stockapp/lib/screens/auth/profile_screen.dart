@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:stockapp/core/theme_provider.dart';
+import 'package:stockapp/utils/toast_helper.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/portfolio_provider.dart';
 import '../../providers/transaction_provider.dart';
@@ -26,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        backgroundColor: isDark ? theme.colorScheme.surface : Colors.green[300],
+        backgroundColor: isDark ? theme.appBarTheme.backgroundColor: theme.colorScheme.surface,
       ),
       body: Builder(
         builder: (context) {
@@ -119,8 +120,14 @@ class ProfileScreen extends StatelessWidget {
                         );
 
                         if (newName != null && newName.isNotEmpty) {
-                          await auth.updateName(newName);
+                          try {
+                            await auth.updateName(newName);
+                            showSuccessToast(context, "Cập nhật tên thành công!");
+                          } catch (e) {
+                            showErrorToast(context, "Cập nhật tên thất bại: ${e.toString()}");
+                          }
                         }
+
                       },
                     ),
                   ],

@@ -44,6 +44,14 @@ class StockProvider with ChangeNotifier {
     await _db.collection('stocks').doc(id).delete();
   }
 
+  void updateStockPrice(String id, double newPrice) {
+    final index = _stocks.indexWhere((s) => s.id == id);
+    if (index != -1) {
+      _stocks[index] = _stocks[index].copyWith(price: newPrice);
+      notifyListeners(); // 👈 quan trọng để UI rebuild
+    }
+  }
+
   /// Lấy chi tiết 1 cổ phiếu
   StockModel? getStockById(String id) {
     try {

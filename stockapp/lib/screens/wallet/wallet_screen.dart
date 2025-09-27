@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:stockapp/models/transaction_model.dart';
 import 'package:stockapp/models/user_model.dart';
 import 'package:stockapp/providers/auth_provider.dart';
 import 'package:stockapp/providers/transaction_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:stockapp/utils/toast_helper.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -50,7 +52,6 @@ class _WalletScreenState extends State<WalletScreen> {
     final AppUser? user = authProvider.user;
 
     final theme = Theme.of(context); // ✅ lấy theme hiện tại
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -102,8 +103,24 @@ class _WalletScreenState extends State<WalletScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       final amount = await _showAmountDialog(context, "Nạp tiền");
-                      if (amount != null && user != null) {
-                        await transactionProvider.deposit(user.uid, amount);
+           
+                      if (amount != null && user != null) {                        
+                        final cleaned = amount.toString().replaceAll(RegExp(r'[^\d.]'), '');
+                        if (cleaned.isEmpty) {
+                          Future.microtask(() =>showErrorToast(context, "Vui lòng nhập số hợp lệ"));
+                          return;
+                        }
+                        if (amount == null || amount <= 0) {
+                          Future.microtask(() => showErrorToast(context, "Vui lòng nhập số hợp lệ lớn hơn 0"));
+                          return;
+                        }
+
+                        try{
+                          await transactionProvider.deposit(user.uid, amount);
+                          Future.microtask(() =>showSuccessToast(context, "Nạp tiền thành công!"));
+                        }catch(e){
+                          Future.microtask(() =>showErrorToast(context, "Nạp tiền thất bại: ${e.toString()}"));
+                        }
                         await authProvider.refreshUser();
                       }
                     },
@@ -124,16 +141,22 @@ class _WalletScreenState extends State<WalletScreen> {
                     onPressed: () async {
                       final amount = await _showAmountDialog(context, "Rút tiền");
                       if (amount != null && user != null) {
+                        final cleaned = amount.toString().replaceAll(RegExp(r'[^\d.]'), '');
+                        if (cleaned.isEmpty) {
+                          Future.microtask(() =>showErrorToast(context, "Vui lòng nhập số hợp lệ"));
+                          return;
+                        }
+                        if (amount == null || amount <= 0) {
+                          Future.microtask(() =>showErrorToast(context, "Vui lòng nhập số hợp lệ lớn hơn 0"));
+                          return;
+                        }
                         try {
                           await transactionProvider.withdraw(user.uid, amount);
                           await authProvider.refreshUser();
+                          Future.microtask(() =>showSuccessToast(context, "Rút tiền thành công!"));
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(e.toString()),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          Future.microtask(() =>showErrorToast(context, "Rút tiền thất bại: ${e.toString()}"));
+
                         }
                       }
                     },
@@ -289,11 +312,14 @@ class _WalletScreenState extends State<WalletScreen> {
         title: Text(title, style: const TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly
+          ],
           keyboardType: TextInputType.number,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
+          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+          decoration: InputDecoration(
             hintText: "Nhập số tiền",
-            hintStyle: TextStyle(color: Colors.white54),
+            hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5)),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.white24),
             ),
