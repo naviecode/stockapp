@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:k_chart_plus_deeping/k_chart_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:stockapp/models/portfolio_model.dart';
 import 'package:stockapp/models/stock_model.dart';
 import 'package:stockapp/providers/auth_provider.dart';
 import 'package:stockapp/providers/portfolio_provider.dart';
@@ -217,66 +218,125 @@ class _StockDetailPageState extends State<StockDetailPage> {
 
   void _showTradeDialog(BuildContext context, String type, StockModel stock) {
     final TextEditingController quantityCtrl = TextEditingController();
+    bool isLoading = false;
 
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final userId = auth.user?.uid;
+    final provider = Provider.of<PortfolioProvider>(context, listen: false);
+
+    int ownedQty = 0; // số lượng hiện có
+
+    // Mở popup async
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(type == "BUY" ? "Mua cổ phiếu" : "Bán cổ phiếu"),
-        content: TextField(
-          controller: quantityCtrl,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: "Số lượng"),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                backgroundColor: Colors.blue, 
+      barrierDismissible: false,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Widget hiển thị ban đầu
+            return AlertDialog(
+              title: Text(type == "BUY" ? "Mua cổ phiếu" : "Bán cổ phiếu"),
+              content: FutureBuilder<PortfolioModel?>(
+                future: provider.portfolio != null
+                    ? Future.value(provider.portfolio)
+                    : provider.fetchPortfolioOnce(userId ?? ""),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  final portfolio = snapshot.data;
+                  ownedQty = portfolio?.quantityOf(stock.id) ?? 0;
+
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (type == "SELL")
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            "Bạn đang sở hữu: $ownedQty cổ phiếu",
+                          ),
+                        ),
+                      TextField(
+                        controller: quantityCtrl,
+                        keyboardType: TextInputType.number,
+                        enabled: !isLoading,
+                        decoration: const InputDecoration(labelText: "Số lượng"),
+                      ),
+                      if (isLoading)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: CircularProgressIndicator(),
+                        ),
+                    ],
+                  );
+                },
               ),
-            onPressed: () async  {
-              final qty = int.tryParse(quantityCtrl.text) ?? 0;
-              if (qty <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Vui lòng nhập số lượng hợp lệ")),
-                );
-                return;
-              }
+              actions: [
+                TextButton(
+                  onPressed: isLoading ? null : () => Navigator.pop(context),
+                  child: const Text("Hủy"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    backgroundColor: Colors.blue,
+                  ),
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final qty = int.tryParse(quantityCtrl.text) ?? 0;
+                          if (qty <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Vui lòng nhập số lượng hợp lệ")));
+                            return;
+                          }
 
-              final provider = Provider.of<PortfolioProvider>(context, listen: false);
-              final auth = Provider.of<AuthProvider>(context, listen: false);
-              final userId = auth.user?.uid; 
+                          if (type == "SELL" && qty > ownedQty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        "Số lượng bán vượt quá số lượng sở hữu")));
+                            return;
+                          }
 
-              try {
-                await provider.tradeStock(
-                  userId: userId,
-                  stockId: stock.id,
-                  type: type,
-                  quantity: qty,
-                  price: stock.price,
-                );
+                          setState(() => isLoading = true);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(
-                    "$type ${stock.symbol} x $qty thành công"
-                  )),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Lỗi: ${e.toString()}")),
-                );
-              }
+                          try {
+                            await provider.tradeStock(
+                              userId: userId,
+                              stockId: stock.id,
+                              type: type,
+                              quantity: qty,
+                              price: stock.price,
+                            );
 
-              Navigator.pop(context);
-            },
-            child: const Text("Xác nhận"),
-          ),
-        ],
-      ),
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        "$type ${stock.symbol} x $qty thành công")));
+
+                            Navigator.pop(context);
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text("Lỗi: ${e.toString()}")));
+                            setState(() => isLoading = false);
+                          }
+                        },
+                  child: const Text("Xác nhận"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
+
 }
 

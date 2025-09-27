@@ -33,6 +33,32 @@ class PortfolioProvider with ChangeNotifier {
       });
   }
 
+   /// Fetch thẳng từ Firestore 1 lần (dùng khi mở popup lần đầu)
+  Future<PortfolioModel?> fetchPortfolioOnce(String userId) async {
+    _loading = true;
+    notifyListeners();
+
+    try {
+      final doc = await _db.collection('portfolios').doc(userId).get();
+      if (doc.exists && doc.data() != null) {
+        _portfolio = PortfolioModel.fromFirestore(doc.data()!, doc.id);
+        notifyListeners();
+        return _portfolio;
+      } else {
+        _portfolio = null;
+        notifyListeners();
+        return null;
+      }
+    } catch (e) {
+      _portfolio = null;
+      notifyListeners();
+      return null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
   /// Cập nhật portfolio khi có giao dịch Mua/Bán
   Future<void> tradeStock({
   required String? userId,

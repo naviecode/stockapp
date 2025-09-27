@@ -30,7 +30,7 @@ class TransactionModel {
       quantity: data['quantity'],
       price: (data['price'] ?? 0).toDouble(),
       total: (data['total'] ?? 0).toDouble(),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

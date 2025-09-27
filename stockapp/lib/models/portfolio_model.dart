@@ -59,4 +59,13 @@ class PortfolioModel {
       'updatedAt': updatedAt,
     };
   }
+  /// Bổ sung: Map tra cứu nhanh stockId -> PortfolioStock
+  Map<String, PortfolioStock> get stockMap {
+    return {for (var s in stocks) s.stockId: s};
+  }
+
+  /// Bổ sung: Lấy số lượng stock theo stockId, default = 0
+  int quantityOf(String stockId) {
+    return stockMap[stockId]?.quantity ?? 0;
+  }
 }
