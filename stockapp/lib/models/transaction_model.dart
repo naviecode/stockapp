@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TransactionModel {
   final String id;
   final String userId;
-  final String stockId;
+  final String? stockId;
   final String type; // BUY | SELL
   final int quantity;
   final double price;
@@ -28,7 +30,7 @@ class TransactionModel {
       quantity: data['quantity'],
       price: (data['price'] ?? 0).toDouble(),
       total: (data['total'] ?? 0).toDouble(),
-      createdAt: (data['createdAt'] as DateTime),
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
   }
 

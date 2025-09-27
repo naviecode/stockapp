@@ -86,6 +86,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshUser() async {
+    if (user == null) return;
+
+    try {
+      final snap = await _fs.getUserDoc(user!.uid);
+      if (snap.exists && snap.data() != null) {
+        user = AppUser.fromMap(snap.data()!);
+
+        await saveUserToPrefs(user!);
+
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("refreshUser error: $e");
+    }
+  }
+
 
   Future<void> signInWithGoogle() async {
     final userCred = await _authSvc.signInWithGoogle();
