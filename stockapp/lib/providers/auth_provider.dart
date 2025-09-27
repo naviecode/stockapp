@@ -102,6 +102,33 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateName(String newName) async {
+    if (user == null) return;
+
+    user = user!.copyWith(name: newName); // cập nhật local
+    notifyListeners();
+
+    // Cập nhật Firestore
+    await _authSvc.updateUserDoc(user!.uid, {'name': newName});
+
+    // Cập nhật SharedPreferences
+    await saveUserToPrefs(user!);
+  }
+
+  /// Cập nhật avatar (photoUrl)
+  Future<void> updatePhotoUrl(String newUrl) async {
+    if (user == null) return;
+
+    user = user!.copyWith(photoUrl: newUrl); // cập nhật local
+    notifyListeners();
+
+    // Cập nhật Firestore
+    await _authSvc.updateUserDoc(user!.uid, {'photoUrl': newUrl});
+
+    // Cập nhật SharedPreferences
+    await saveUserToPrefs(user!);
+  }
+
   Future<void> signOut() async {
     await _authSvc.signOut();
     await clearUserFromPrefs();

@@ -30,6 +30,21 @@ class AppUser {
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
+  
+  AppUser copyWith({
+    String? name,
+    String? photoUrl,
+    double? balance,
+  }) {
+    return AppUser(
+      uid: uid,
+      name: name ?? this.name,
+      email: email,
+      photoUrl: photoUrl ?? this.photoUrl,
+      balance: balance ?? this.balance,
+      createdAt: createdAt,
+    );
+  }
 
   Map<String, dynamic> toMap() => {
         'uid': uid,

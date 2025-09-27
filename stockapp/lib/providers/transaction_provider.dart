@@ -6,17 +6,26 @@ class TransactionProvider with ChangeNotifier {
   final _db = FirebaseFirestore.instance;
   List<TransactionModel> _transactions = [];
 
+  // Bổ sung trạng thái loading
+  bool _loading = false;
+  bool get loading => _loading;
+
   List<TransactionModel> get transactions => _transactions;
 
   /// Lắng nghe toàn bộ giao dịch của user
   void listenTransactions(String userId) {
+    _loading = true; // bắt đầu loading
+    notifyListeners();
+
     _db.collection('transactions')
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((snapshot) {
-      _transactions = snapshot.docs.map((doc) =>
-          TransactionModel.fromFirestore(doc.data(), doc.id)).toList();
+      _transactions = snapshot.docs
+          .map((doc) => TransactionModel.fromFirestore(doc.data(), doc.id))
+          .toList();
+      _loading = false; // kết thúc loading
       notifyListeners();
     });
   }

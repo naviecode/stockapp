@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Email register
   Future<UserCredential> registerWithEmail(String email, String password) async {
@@ -27,6 +29,9 @@ class FirebaseAuthService {
     );
 
     return await FirebaseAuth.instance.signInWithCredential(credential);
+  }
+  Future<void> updateUserDoc(String uid, Map<String, dynamic> data) async {
+    await _db.collection('users').doc(uid).set(data, SetOptions(merge: true));
   }
 
   Future<void> signOut() => _auth.signOut();

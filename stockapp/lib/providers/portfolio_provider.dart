@@ -6,15 +6,25 @@ class PortfolioProvider with ChangeNotifier {
   final _db = FirebaseFirestore.instance;
   PortfolioModel? _portfolio;
 
+  // Bổ sung trạng thái loading
+  bool _loading = false;
+  bool get loading => _loading;
+
   PortfolioModel? get portfolio => _portfolio;
 
   /// Lắng nghe portfolio của user
   void listenPortfolio(String userId) {
+    _loading = true; // bắt đầu loading
+    notifyListeners();
+
     _db.collection('portfolios').doc(userId).snapshots().listen((doc) {
       if (doc.exists) {
         _portfolio = PortfolioModel.fromFirestore(doc.data()!, doc.id);
-        notifyListeners();
+      } else {
+        _portfolio = null;
       }
+      _loading = false; // kết thúc loading
+      notifyListeners();
     });
   }
 
@@ -66,10 +76,10 @@ class PortfolioProvider with ChangeNotifier {
           stocks[index] = {
             'stockId': stockId,
             'quantity': newQty,
-            'avgPrice': oldAvgPrice, // giữ nguyên avg
+            'avgPrice': oldAvgPrice,
           };
         } else {
-          stocks.removeAt(index); // bán hết thì xoá khỏi danh mục
+          stocks.removeAt(index);
         }
       }
     }
