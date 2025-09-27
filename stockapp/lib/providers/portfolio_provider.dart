@@ -29,80 +29,115 @@ class PortfolioProvider with ChangeNotifier {
     });
   }
 
-  /// Cập nhật portfolio khi có giao dịch
-  Future<void> updatePortfolio({
-    required String userId,
-    required String stockId,
-    required String type, // BUY | SELL
-    required int quantity,
-    required double price,
-  }) async {
-    final docRef = _db.collection('portfolios').doc(userId);
-    final snapshot = await docRef.get();
+  /// Cập nhật portfolio khi có giao dịch Mua/Bán
+  Future<void> tradeStock({
+  required String? userId,
+  required String stockId,
+  required String type, // BUY | SELL
+  required int quantity,
+  required double price,
+}) async {
+  final userRef = _db.collection('users').doc(userId);
+  final portfolioRef = _db.collection('portfolios').doc(userId);
 
-    Map<String, dynamic> data;
-    List<Map<String, dynamic>> stocks = [];
+  // Lấy balance từ user
+  final userSnap = await userRef.get();
+  if (!userSnap.exists) {
+    throw Exception("User không tồn tại");
+  }
 
-    if (snapshot.exists) {
-      data = snapshot.data()!;
-      stocks = List<Map<String, dynamic>>.from(data['stocks'] ?? []);
+  double balance = (userSnap.data()?['balance'] ?? 0).toDouble();
+
+  // Lấy portfolio
+  final portfolioSnap = await portfolioRef.get();
+  List<Map<String, dynamic>> stocks = [];
+  if (portfolioSnap.exists) {
+    stocks = List<Map<String, dynamic>>.from(portfolioSnap.data()?['stocks'] ?? []);
+  }
+
+  final index = stocks.indexWhere((s) => s['stockId'] == stockId);
+
+  if (type == "BUY") {
+    final cost = price * quantity;
+    if (balance < cost) {
+      throw Exception("Không đủ tiền để mua cổ phiếu");
     }
 
-    // tìm stock trong portfolio
-    final index = stocks.indexWhere((s) => s['stockId'] == stockId);
-
-    if (index == -1 && type == "BUY") {
-      // Mua mới
+    // Cập nhật stocks
+    if (index == -1) {
       stocks.add({
         'stockId': stockId,
         'quantity': quantity,
         'avgPrice': price,
       });
-    } else if (index != -1) {
+    } else {
       final current = stocks[index];
       final oldQty = current['quantity'];
       final oldAvgPrice = current['avgPrice'];
 
-      if (type == "BUY") {
-        final newQty = oldQty + quantity;
-        final newAvg = ((oldQty * oldAvgPrice) + (quantity * price)) / newQty;
-        stocks[index] = {
-          'stockId': stockId,
-          'quantity': newQty,
-          'avgPrice': newAvg,
-        };
-      } else if (type == "SELL") {
-        final newQty = oldQty - quantity;
-        if (newQty > 0) {
-          stocks[index] = {
-            'stockId': stockId,
-            'quantity': newQty,
-            'avgPrice': oldAvgPrice,
-          };
-        } else {
-          stocks.removeAt(index);
-        }
-      }
+      final newQty = oldQty + quantity;
+      final newAvg = ((oldQty * oldAvgPrice) + (quantity * price)) / newQty;
+
+      stocks[index] = {
+        'stockId': stockId,
+        'quantity': newQty,
+        'avgPrice': newAvg,
+      };
     }
 
-    final newData = {
-      'stocks': stocks,
-      'totalValue': stocks.fold<double>(
-        0,
-        (sum, s) => sum + (s['quantity'] * s['avgPrice']),
-      ),
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
+    // Trừ tiền trong users
+    balance -= cost;
+  } else if (type == "SELL") {
+    if (index == -1) {
+      throw Exception("Không đủ cổ phiếu để bán");
+    }
 
-    await docRef.set(newData, SetOptions(merge: true));
+    final current = stocks[index];
+    final oldQty = current['quantity'];
+    final oldAvgPrice = current['avgPrice'];
+
+    if (oldQty < quantity) {
+      throw Exception("Không đủ cổ phiếu để bán");
+    }
+
+    final newQty = oldQty - quantity;
+    if (newQty > 0) {
+      stocks[index] = {
+        'stockId': stockId,
+        'quantity': newQty,
+        'avgPrice': oldAvgPrice,
+      };
+    } else {
+      stocks.removeAt(index);
+    }
+
+    // Cộng tiền vào users
+    balance += price * quantity;
   }
+
+  // Cập nhật users balance
+  await userRef.update({'balance': balance, 'updatedAt': FieldValue.serverTimestamp()});
+
+  // Cập nhật portfolio
+  final portfolioData = {
+    'stocks': stocks,
+    'totalValue': stocks.fold<double>(
+      0,
+      (sum, s) => sum + (s['quantity'] * s['avgPrice']),
+    ),
+    'updatedAt': FieldValue.serverTimestamp(),
+  };
+  await portfolioRef.set(portfolioData, SetOptions(merge: true));
+
+  notifyListeners();
+}
+
 
   double calculateTotalValueRealtime(List<StockModel> stockList) {
     if (_portfolio == null || _portfolio!.stocks.isEmpty) return 0;
 
     double total = 0;
     for (var p in _portfolio!.stocks) {
-      // tìm stock realtime theo stockId
       final stock = stockList.firstWhere(
         (s) => s.id == p.stockId,
         orElse: () => StockModel(
@@ -115,7 +150,7 @@ class PortfolioProvider with ChangeNotifier {
             updatedAt: Timestamp.now(),
             history: []),
       );
-      total += p.quantity * stock.price; 
+      total += p.quantity * stock.price;
     }
     return total;
   }

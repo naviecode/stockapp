@@ -2,10 +2,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:k_chart_plus_deeping/k_chart_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:stockapp/models/stock_model.dart';
+import 'package:stockapp/providers/auth_provider.dart';
+import 'package:stockapp/providers/portfolio_provider.dart';
 
 class StockDetailPage extends StatefulWidget {
-  final String stockId; // document id trong Firestore
+  final String stockId;
 
   const StockDetailPage({super.key, required this.stockId});
 
@@ -38,6 +41,10 @@ class _StockDetailPageState extends State<StockDetailPage> {
         }
 
         final stock = StockModel.fromFirestore(snapshot.data!);
+
+        if (showLoading) {
+          Future.microtask(() => setState(() => showLoading = false));
+        }
         
         return _buildStockDetail(stock);
       },
@@ -113,10 +120,15 @@ class _StockDetailPageState extends State<StockDetailPage> {
   }
 
   Widget buildVolButton() {
-    return _buildButton(context, 'VOL', !_volHidden, () {
-      _volHidden = !_volHidden;
-      setState(() {});
-    });
+    return Wrap(
+    spacing: 10,
+    children: [
+      _buildButton(context, 'VOL', !_volHidden, () {
+        _volHidden = !_volHidden;
+        setState(() {});
+      }),
+    ],
+  );
   }
 
   Widget buildMainButtons() {
@@ -173,6 +185,10 @@ class _StockDetailPageState extends State<StockDetailPage> {
   }
 
   Widget _buildTradeButtons(StockModel stock) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.user; 
+    final isUserReady = user != null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -180,16 +196,17 @@ class _StockDetailPageState extends State<StockDetailPage> {
           Expanded(
             child: ElevatedButton(
               style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              onPressed: () => _showTradeDialog(context, "BUY", stock),
+                  ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              onPressed: isUserReady ? () => _showTradeDialog(context, "BUY", stock) : null,
               child: const Text("Mua"),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
+            
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () => _showTradeDialog(context, "SELL", stock),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              onPressed: isUserReady ? () => _showTradeDialog(context, "SELL", stock) : null,
               child: const Text("Bán"),
             ),
           ),
@@ -216,11 +233,43 @@ class _StockDetailPageState extends State<StockDetailPage> {
             child: const Text("Hủy"),
           ),
           ElevatedButton(
-            onPressed: () {
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                backgroundColor: Colors.blue, 
+              ),
+            onPressed: () async  {
               final qty = int.tryParse(quantityCtrl.text) ?? 0;
-              if (qty > 0) {
-                print("$type ${stock.symbol} x $qty");
+              if (qty <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Vui lòng nhập số lượng hợp lệ")),
+                );
+                return;
               }
+
+              final provider = Provider.of<PortfolioProvider>(context, listen: false);
+              final auth = Provider.of<AuthProvider>(context, listen: false);
+              final userId = auth.user?.uid; 
+
+              try {
+                await provider.tradeStock(
+                  userId: userId,
+                  stockId: stock.id,
+                  type: type,
+                  quantity: qty,
+                  price: stock.price,
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(
+                    "$type ${stock.symbol} x $qty thành công"
+                  )),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Lỗi: ${e.toString()}")),
+                );
+              }
+
               Navigator.pop(context);
             },
             child: const Text("Xác nhận"),

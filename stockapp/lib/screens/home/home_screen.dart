@@ -1,12 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stockapp/models/user_model.dart';
 import 'package:stockapp/providers/auth_provider.dart';
 import 'package:stockapp/providers/portfolio_provider.dart';
 import '../../widgets/stock_card.dart';
 import '../stock/StockDetailPage.dart';
-import 'package:stockapp/models/stock_model.dart';
 import 'package:stockapp/providers/stock_provider.dart';
 import 'package:intl/intl.dart';
 
