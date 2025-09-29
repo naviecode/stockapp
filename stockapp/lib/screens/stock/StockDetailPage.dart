@@ -127,7 +127,7 @@ class _StockDetailPageState extends State<StockDetailPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                "Bạn đang sở hữu: $ownedQty cổ phiếu",
+                "Bạn đang sở hữu: $ownedQty coin",
                 style: TextStyle(
                   color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
                   fontSize: 14,
@@ -301,7 +301,7 @@ class _StockDetailPageState extends State<StockDetailPage> {
             return AlertDialog(
               backgroundColor: Colors.grey[900],
               title: Text(
-                type == "BUY" ? "Mua cổ phiếu" : "Bán cổ phiếu",
+                type == "BUY" ? "Mua" : "Bán",
                 style: const TextStyle(color: Colors.white),
               ),
               content: FutureBuilder<PortfolioModel?>(
@@ -328,7 +328,7 @@ class _StockDetailPageState extends State<StockDetailPage> {
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
-                            "Bạn đang sở hữu: $ownedQty cổ phiếu",
+                            "Bạn đang sở hữu: $ownedQty coin",
                             style: const TextStyle(color: Colors.white70),
                           ),
                         ),

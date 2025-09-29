@@ -97,7 +97,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       child: TextField(
                         style: TextStyle(color: theme.colorScheme.onSurface),
                         decoration: InputDecoration(
-                          hintText: "Tìm theo mã cổ phiếu...",
+                          hintText: "Tìm theo mã coin...",
                           hintStyle: TextStyle(
                               color: theme.colorScheme.onSurface.withOpacity(0.5)),
                           prefixIcon: Icon(Icons.search,
@@ -221,14 +221,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         case "BUY":
                           icon = Icons.arrow_upward;
                           color = Colors.greenAccent;
-                          title = "Mua cổ phiếu - ${tx.stockId}";
+                          title = "Mua coin - ${tx.stockId}";
                           subtitle =
                               "SL: ${tx.quantity} | Ngày: ${DateFormat('dd/MM/yyyy').format(tx.createdAt)}";
                           break;
                         case "SELL":
                           icon = Icons.arrow_downward;
                           color = Colors.redAccent;
-                          title = "Bán cổ phiếu - ${tx.stockId}";
+                          title = "Bán coin - ${tx.stockId}";
                           subtitle =
                               "SL: ${tx.quantity} | Ngày: ${DateFormat('dd/MM/yyyy').format(tx.createdAt)}";
                           break;

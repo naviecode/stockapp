@@ -76,7 +76,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                   child: TextField(
                     style: theme.textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: "Tìm theo mã cổ phiếu...",
+                      hintText: "Tìm theo mã coin...",
                       hintStyle: theme.textTheme.bodyMedium
                           ?.copyWith(color: theme.hintColor),
                       prefixIcon:
@@ -121,7 +121,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             child: (stocks.isEmpty)
                 ? Center(
                     child: Text(
-                      "Không tìm thấy cổ phiếu phù hợp",
+                      "Không tìm thấy coin phù hợp",
                       style: theme.textTheme.bodyMedium,
                     ),
                   )
@@ -142,13 +142,19 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                         child: ListTile(
                           leading: CircleAvatar(
                             radius: 18,
-                            backgroundColor: Colors.green[400],
-                            child: Text(
-                              item.stockId[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            backgroundColor: theme.colorScheme.surfaceVariant,
+                            child: Image.asset(
+                              item.localLogoPath ,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Text(
+                                  item.stockId[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           title: Text(

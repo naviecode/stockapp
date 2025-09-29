@@ -23,6 +23,8 @@ class StockModel {
     required this.updatedAt,
   });
 
+  String get localLogoPath => "assets/logos/${symbol.toLowerCase()}.png";
+  
   factory StockModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return StockModel(
@@ -91,6 +93,7 @@ class StockModel {
       'changePercent': changePercent,
       'volume': volume,
       'history': history.map((e) => e.toMap()).toList(),
+      'logoUrl': logoUrl,
       'updatedAt': updatedAt,
     };
   }

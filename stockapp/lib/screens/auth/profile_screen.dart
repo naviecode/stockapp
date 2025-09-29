@@ -178,7 +178,7 @@ class ProfileScreen extends StatelessWidget {
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.layers, color: Colors.purple),
-                    title: const Text('Số loại cổ phiếu đang nắm giữ'),
+                    title: const Text('Số loại coin đang nắm giữ'),
                     subtitle: Text(
                       portfolio != null ? "${portfolio.stocks.length}" : "0",
                       style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),

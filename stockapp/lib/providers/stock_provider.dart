@@ -10,7 +10,7 @@ class StockProvider with ChangeNotifier {
 
   List<StockModel> get stocks => _stocks;
 
-  /// Lắng nghe realtime danh sách cổ phiếu
+  /// Lắng nghe realtime danh sách coin
   void listenStocks() {
     _db.collection('stocks').snapshots().listen((snapshot) {
       _stocks = snapshot.docs
@@ -29,17 +29,17 @@ class StockProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Thêm mới cổ phiếu
+  /// Thêm mới coin
   Future<void> addStock(StockModel stock) async {
     await _db.collection('stocks').add(stock.toMap());
   }
 
-  /// Cập nhật cổ phiếu
+  /// Cập nhật coin
   Future<void> updateStock(String id, StockModel stock) async {
     await _db.collection('stocks').doc(id).update(stock.toMap());
   }
 
-  /// Xoá cổ phiếu
+  /// Xoá coin
   Future<void> deleteStock(String id) async {
     await _db.collection('stocks').doc(id).delete();
   }
@@ -52,7 +52,7 @@ class StockProvider with ChangeNotifier {
     }
   }
 
-  /// Lấy chi tiết 1 cổ phiếu
+  /// Lấy chi tiết 1 coin
   StockModel? getStockById(String id) {
     try {
       return _stocks.firstWhere((s) => s.id == id);
@@ -93,21 +93,21 @@ class StockProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// ⭐ Top Gainers: cổ phiếu tăng mạnh nhất theo %
+  /// ⭐ Top Gainers: coin tăng mạnh nhất theo %
   List<StockModel> getTopGainers({int limit = 5}) {
     final gainers = _stocks.where((s) => s.changePercent > 0).toList();
     gainers.sort((a, b) => b.changePercent.compareTo(a.changePercent));
     return gainers.take(limit).toList();
   }
 
-  /// ⭐ Top Losers: cổ phiếu giảm mạnh nhất theo %
+  /// ⭐ Top Losers: coin giảm mạnh nhất theo %
   List<StockModel> getTopLosers({int limit = 5}) {
     final losers = _stocks.where((s) => s.changePercent < 0).toList();
     losers.sort((a, b) => a.changePercent.compareTo(b.changePercent));
     return losers.take(limit).toList();
   }
 
-  /// ⭐ Top Volume: cổ phiếu có khối lượng giao dịch cao nhất
+  /// ⭐ Top Volume: coin có khối lượng giao dịch cao nhất
   List<StockModel> getTopVolume({int limit = 5}) {
     final volumes = List<StockModel>.from(_stocks);
     volumes.sort((a, b) => b.volume.compareTo(a.volume));

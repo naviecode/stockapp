@@ -4,11 +4,13 @@ class PortfolioStock {
   final String stockId;
   final int quantity;
   final double avgPrice;
+  final String? logoUrl;
 
   PortfolioStock({
     required this.stockId,
     required this.quantity,
     required this.avgPrice,
+    this.logoUrl,
   });
 
   factory PortfolioStock.fromMap(Map<String, dynamic> data) {
@@ -26,6 +28,7 @@ class PortfolioStock {
       'avgPrice': avgPrice,
     };
   }
+  String get localLogoPath => "assets/logos/${stockId.toLowerCase()}.png";
 }
 
 class PortfolioModel {

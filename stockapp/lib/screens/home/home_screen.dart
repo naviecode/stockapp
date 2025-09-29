@@ -210,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final stocks = sp.filteredStockList;
                 if (stocks.isEmpty) {
                   return Center(
-                    child: Text("Chưa có dữ liệu cổ phiếu",
+                    child: Text("Chưa có dữ liệu coin",
                         style: theme.textTheme.bodyMedium?.copyWith(
                             color:
                                 theme.colorScheme.onSurface.withOpacity(0.5))),
@@ -256,35 +256,27 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor:
-                                        theme.colorScheme.surfaceVariant,
-                                    child: (stock.logoUrl != null &&
-                                            stock.logoUrl!.isNotEmpty)
-                                        ? ClipOval(
-                                            child: Image.network(
-                                              stock.logoUrl!,
-                                              fit: BoxFit.cover,
-                                              width: 28,
-                                              height: 28,
-                                              errorBuilder: (context, error,
-                                                      stackTrace) =>
-                                                  Icon(Icons.business,
-                                                      color: theme.colorScheme
-                                                          .onSurface
-                                                          .withOpacity(0.7),
-                                                      size: 16),
+                                      radius: 14,
+                                      backgroundColor: theme.colorScheme.surfaceVariant,
+                                      child: stock.localLogoPath.isNotEmpty
+                                          ? ClipOval(
+                                              child: Image.asset(
+                                                stock.localLogoPath,
+                                                fit: BoxFit.cover,
+                                                width: 28,
+                                                height: 28,
+                                              ),
+                                            )
+                                          : Icon(
+                                              Icons.business,
+                                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                              size: 16,
                                             ),
-                                          )
-                                        : Icon(Icons.business,
-                                            color: theme.colorScheme.onSurface
-                                                .withOpacity(0.7),
-                                            size: 16),
-                                  ),
+                                    ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      "${stock.symbol} - ${stock.name}",
+                                      "${stock.name}",
                                       overflow: TextOverflow.ellipsis,
                                       style:
                                           theme.textTheme.bodyMedium?.copyWith(
@@ -376,13 +368,13 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: theme.colorScheme.surfaceVariant,
-          title: Text("Tìm cổ phiếu",
+          title: Text("Tìm coin",
               style: TextStyle(color: theme.colorScheme.onSurface)),
           content: TextField(
             autofocus: true,
             style: TextStyle(color: theme.colorScheme.onSurface),
             decoration: InputDecoration(
-              hintText: "Nhập tên hoặc ký hiệu cổ phiếu",
+              hintText: "Nhập tên hoặc ký hiệu coin",
               hintStyle: TextStyle(
                   color: theme.colorScheme.onSurface.withOpacity(0.5)),
             ),

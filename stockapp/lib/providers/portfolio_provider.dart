@@ -90,7 +90,7 @@ class PortfolioProvider with ChangeNotifier {
   if (type == "BUY") {
     final cost = price * quantity;
     if (balance < cost) {
-      throw Exception("Không đủ tiền để mua cổ phiếu");
+      throw Exception("Không đủ tiền để mua");
     }
 
     // Cập nhật stocks
@@ -119,7 +119,7 @@ class PortfolioProvider with ChangeNotifier {
     balance -= cost;
   } else if (type == "SELL") {
     if (index == -1) {
-      throw Exception("Không đủ cổ phiếu để bán");
+      throw Exception("Không đủ để bán");
     }
 
     final current = stocks[index];
@@ -127,7 +127,7 @@ class PortfolioProvider with ChangeNotifier {
     final oldAvgPrice = current['avgPrice'];
 
     if (oldQty < quantity) {
-      throw Exception("Không đủ cổ phiếu để bán");
+      throw Exception("Không đủ để bán");
     }
 
     final newQty = oldQty - quantity;
